@@ -15,21 +15,28 @@ bsky_password = settings['password']
 def get_user_data(client, handle):
     user_data = client.get_profiles(actors=[handle])
     profiles = user_data.profiles
+    if not profiles or len(profiles) == 0:
+        print(f"User {handle} not found - check spelling and/or whether the user is not suspended")
+        return False
     return profiles[0]
 
 
 def add_user_to_list(client, target, my_list):
     try:
-        uid = get_user_data(client, target).did
-        client.app.bsky.graph.listitem.create(
-            repo=client.me.did,
-            record={
-                "subject": uid,
-                "list": my_list,
-                "createdAt": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
-            }
-        )
-        print(f"User {target} added to list")
+        user = get_user_data(client, target)
+        if not user:
+            return False
+        else:
+            uid = user.did
+            client.app.bsky.graph.listitem.create(
+                repo=client.me.did,
+                record={
+                    "subject": uid,
+                    "list": my_list,
+                    "createdAt": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+                }
+            )
+            print(f"User {target} added to list")
     except Exception as e:
         print(e)
         return False
